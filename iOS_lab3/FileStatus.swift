@@ -10,10 +10,12 @@ import Foundation
 
 class FileStatus {
     var filename: String;
-    var progress: Double;
+    var progress: String;
+    var task: URLSessionDownloadTask? = nil;
     
-    init(filename: String, progress: Double) {
+    init(filename: String, progress: String, task: URLSessionDownloadTask) {
         self.filename = filename;
         self.progress = progress;
+        self.task = task;
     }
 }

@@ -8,21 +8,24 @@
 
 import UIKit
 
-class DownloadTableTableViewController: UITableViewController {
+class DownloadTableTableViewController: UITableViewController, URLSessionDownloadDelegate{
     
-     var filesStatus = [FileStatus]()
+    var filesStatus: [FileStatus] = []
     
-    func prepareData() {
-        self.filesStatus.append(FileStatus(filename: "file1", progress: 123.4));
-        self.filesStatus.append(FileStatus(filename: "file2", progress: 323.4));
-        self.filesStatus.append(FileStatus(filename: "file3", progress: 423.4));
+    @IBAction func startDownload(_ sender: UIBarButtonItem) {
+        downloadPhoto(url: "https://upload.wikimedia.org/wikipedia/commons/0/04/Dyck,_Anthony_van_-_Family_Portrait.jpg")
+        downloadPhoto(url: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Petrus_Christus_-_Portrait_of_a_Young_Woman_-_Google_Art_Project.jpg")
+        downloadPhoto(url: "https://upload.wikimedia.org/wikipedia/commons/3/36/Quentin_Matsys_-_A_Grotesque_old_woman.jpg")
+        downloadPhoto(url: "https://upload.wikimedia.org/wikipedia/commons/c/c8/Valmy_Battle_painting.jpg")
+        
     }
     
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        prepareData()
 
+        
+        
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
 
@@ -30,6 +33,74 @@ class DownloadTableTableViewController: UITableViewController {
         // self.navigationItem.rightBarButtonItem = self.editButtonItem()
     }
 
+    
+    func downloadPhoto(url: String) {
+        print("1 \(url)");
+        let imageURL: URL = URL(string: url)!
+        let config = URLSessionConfiguration.background(withIdentifier: String(url))
+        config.sessionSendsLaunchEvents = true
+        config.isDiscretionary = true
+        let session = URLSession(configuration: config, delegate: self, delegateQueue: OperationQueue.main)
+        let task = session.downloadTask(with: imageURL)
+        task.resume()
+        let fileName = String(describing: url).components(separatedBy: "/").last!
+        filesStatus.append(FileStatus(filename: fileName, progress: "Downloading, 0% done...", task: task))
+        
+    }
+    
+    public func urlSession(_ session: URLSession,
+                           downloadTask: URLSessionDownloadTask,   didFinishDownloadingTo location: URL) {
+        print(location)
+        
+        let docDir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        
+        let url = downloadTask.currentRequest!.url!
+        
+        let fileName = String(describing: url).components(separatedBy: "/").last!
+        
+        
+        let dowloadedFilePath = URL(fileURLWithPath: docDir.appending("/\(fileName)"));
+        print(dowloadedFilePath)
+        let fileManager = FileManager.default
+        
+        do {
+         try fileManager.moveItem(at: location, to: dowloadedFilePath)
+        } catch {
+            let err = error as NSError
+            print(err)
+        }
+        
+        for i in 0 ..< self.filesStatus.count {
+            let filename = String(self.filesStatus[i].filename)
+            if filename == String(describing: url).components(separatedBy: "/").last! {
+                self.filesStatus[i].progress = "Downloading finished."
+            }
+        }
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
+    }
+    
+    
+    
+    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64){
+        
+        let url = downloadTask.currentRequest!.url!
+        let downloadStatus = Double(totalBytesWritten)/Double(totalBytesExpectedToWrite);
+        
+        
+        
+        for i in 0 ..< self.filesStatus.count {
+            let filename = String(self.filesStatus[i].filename)
+            if filename == String(describing: url).components(separatedBy: "/").last! {
+                self.filesStatus[i].progress = "Downloading, \(Int(downloadStatus * 100))% done..."
+            }
+        }
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -56,7 +127,7 @@ class DownloadTableTableViewController: UITableViewController {
         
         let fileStatus = self.filesStatus[indexPath.row]
         cell.fileName.text = fileStatus.filename;
-        cell.progress.text = fileStatus.progress as? String
+        cell.progress.text = String(fileStatus.progress)
 
 
         return cell
