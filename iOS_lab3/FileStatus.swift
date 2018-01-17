@@ -6,16 +6,20 @@
 //  Copyright © 2018 Admin. All rights reserved.
 //
 
-import Foundation
+import  UIKit
 
 class FileStatus {
     var filename: String;
     var progress: String;
     var task: URLSessionDownloadTask? = nil;
+    var isHalf = false;
+    var image: UIImage? = nil;
     
-    init(filename: String, progress: String, task: URLSessionDownloadTask) {
+    init(filename: String, progress: String, task: URLSessionDownloadTask, isHalf: Bool, image: UIImage?) {
         self.filename = filename;
         self.progress = progress;
         self.task = task;
+        self.isHalf = isHalf;
+        self.image = image;
     }
 }

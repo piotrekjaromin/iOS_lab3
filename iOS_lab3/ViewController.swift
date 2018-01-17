@@ -76,10 +76,8 @@ class ViewController: UIViewController, URLSessionDownloadDelegate {
         //self.updateTask(downloadTask: downloadTask, desc: "Downloaded \(Int(round(downloadRatio*100)))%")
         
         print(downloadRatio)
-        
-        
-        
     }
+
 }
 
 
